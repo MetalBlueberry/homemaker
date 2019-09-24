@@ -54,6 +54,9 @@ var _ = Describe("Config", func() {
 		Specify("that DstDir must be and absolute path and point to a valid directory", func() {
 			Expect(c.DstDir).To(BeADirectory())
 		})
+		Specify("that handled map should be initialized", func() {
+			Expect(c.handled).ToNot(BeNil())
+		})
 		Describe("If Unlink is set", func() {
 			BeforeEach(func() {
 				c.Unlink = true
