@@ -12,7 +12,7 @@ import (
 )
 
 var _ = Describe("Homemaker Smoke Test", func() {
-	Describe("Executing homemaker run default", func() {
+	Describe("Executing link_test.yml config", func() {
 		var (
 			err error
 		)
@@ -21,7 +21,7 @@ var _ = Describe("Homemaker Smoke Test", func() {
 		})
 		It("Should Successfully create and delete the sample.conf link", func() {
 			By("Loading configuration")
-			viper.SetConfigFile("./../test/homemaker.yml")
+			viper.SetConfigFile("./../test/link_test.yml")
 			err = viper.ReadInConfig()
 			Expect(err).To(BeNil())
 
@@ -46,7 +46,7 @@ var _ = Describe("Homemaker Smoke Test", func() {
 			err = ProcessTask("simple-link", c)
 			Expect(err).To(BeNil())
 
-			By("Checking cretedFile exist")
+			By("Checking cretedFile not exist")
 			_, err = os.Stat(createdFile)
 			Expect(err).ToNot(BeNil())
 		})
