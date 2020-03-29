@@ -6,10 +6,14 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 
-COPY . .
+COPY *.go .
+COPY cmd cmd
+COPY internal internal
 
 RUN go test -v ./...
 RUN go build
+
+COPY test test
 RUN cd test && go test -c
 
 FROM ubuntu
@@ -21,4 +25,4 @@ COPY --from=build /homemaker/test/test.test /bin/
 
 WORKDIR /home/ubuntu/.config/homemaker
 COPY test .
-CMD ["test.test","-test.v"] 
+CMD ["test.test", "-ginkgo.v"] 
