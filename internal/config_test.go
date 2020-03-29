@@ -36,35 +36,35 @@ var _ = Describe("Config", func() {
 		})
 	})
 	Describe("When digesting the configuration", func() {
-		BeforeEach(func() {
-			c = Config{
-				File:    "file",
-				SrcDir:  "./../test/src",
-				DstDir:  "./../test/dst",
-				Variant: "variant",
-			}
-		})
-		JustBeforeEach(func() {
-			c.digest()
-		})
+		// BeforeEach(func() {
+		// 	c = Config{
+		// 		File:    "file",
+		// 		SrcDir:  "./../test/src",
+		// 		DstDir:  "./../test/dst",
+		// 		Variant: "variant",
+		// 	}
+		// })
+		// JustBeforeEach(func() {
+		// 	c.digest()
+		// })
 
-		Specify("that SrcDir must be an absolute path and point to a valid directory", func() {
-			Expect(c.SrcDir).To(BeADirectory())
-		})
-		Specify("that DstDir must be and absolute path and point to a valid directory", func() {
-			Expect(c.DstDir).To(BeADirectory())
-		})
-		Specify("that handled map should be initialized", func() {
-			Expect(c.handled).ToNot(BeNil())
-		})
-		Describe("If Unlink is set", func() {
-			BeforeEach(func() {
-				c.Unlink = true
-			})
-			Specify("that Nocmd must be set", func() {
-				Expect(c.Nocmds).To(BeTrue())
-			})
-		})
+		// Specify("that SrcDir must be an absolute path and point to a valid directory", func() {
+		// 	Expect(c.SrcDir).To(BeADirectory())
+		// })
+		// Specify("that DstDir must be and absolute path and point to a valid directory", func() {
+		// 	Expect(c.DstDir).To(BeADirectory())
+		// })
+		// Specify("that handled map should be initialized", func() {
+		// 	Expect(c.handled).ToNot(BeNil())
+		// })
+		// Describe("If Unlink is set", func() {
+		// 	BeforeEach(func() {
+		// 		c.Unlink = true
+		// 	})
+		// 	Specify("that Nocmd must be set", func() {
+		// 		Expect(c.Nocmds).To(BeTrue())
+		// 	})
+		// })
 	})
 
 })
