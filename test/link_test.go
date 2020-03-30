@@ -1,9 +1,9 @@
 package test_test
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,25 +44,78 @@ var _ = Describe("Link", func() {
 
 	It("Should execute the run command", func() {
 
+		linkToSampleConf := "/home/gopher/.config/app/sample.conf"
+		sampleConf := "./.config/app/sample.conf"
+
 		printTree()
+		Expect(linkToSampleConf).ToNot(BeAnExistingFile())
+
 		state := run("run", "-v")
 		Expect(state.Success()).To(BeTrue())
 
 		printTree()
+		Expect(linkToSampleConf).To(BeAnExistingFile())
+		Expect(linkToSampleConf).To(BeALinkOf(sampleConf))
 
-		fileLinked, err := os.Readlink("/home/gopher/.config/app/sample.conf")
-		Expect(err).To(BeNil())
-
-		dst, err := os.Lstat(fileLinked)
-		Expect(err).To(BeNil())
-
-		srcPath, err := filepath.Abs("./.config/app/sample.conf")
-		Expect(err).To(BeNil())
-		log.Printf("srcPath %s", srcPath)
-
-		src, err := os.Lstat(srcPath)
-		Expect(err).To(BeNil())
-
-		Expect(os.SameFile(src, dst)).To(BeTrue())
 	})
 })
+
+type fileLinkMatcher struct {
+	source string
+	target string
+}
+
+func BeALinkOf(path string) *fileLinkMatcher {
+	return &fileLinkMatcher{
+		source: path,
+	}
+}
+
+func (fm *fileLinkMatcher) Match(actual interface{}) (success bool, err error) {
+	linkPath, ok := actual.(string)
+	if !ok {
+		return false, errors.New("Value is not string")
+	}
+
+	fileLink, err := os.Readlink(linkPath)
+	if err != nil {
+		return false, err
+	}
+	fm.target = fileLink
+
+	dst, err := os.Lstat(fileLink)
+	if err != nil {
+		return false, err
+	}
+	src, err := os.Lstat(fm.source)
+	if err != nil {
+		return false, err
+	}
+
+	return os.SameFile(src, dst), nil
+
+}
+
+func (fm *fileLinkMatcher) FailureMessage(actual interface{}) (message string) {
+	sourcePath, err := filepath.Abs(fm.source)
+	if err != nil {
+		panic(err)
+	}
+	targetPath, err := filepath.Abs(fm.target)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("File %s is not linked by %s", targetPath, sourcePath)
+}
+
+func (fm *fileLinkMatcher) NegatedFailureMessage(actual interface{}) (message string) {
+	sourcePath, err := filepath.Abs(fm.source)
+	if err != nil {
+		panic(err)
+	}
+	targetPath, err := filepath.Abs(fm.target)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("File %s is linked by %s", targetPath, sourcePath)
+}
