@@ -35,10 +35,10 @@ var runCmd = &cobra.Command{
 	Short: "Run the desired task",
 	Args:  cobra.MaximumNArgs(1),
 	Long:  `Refer to external documentation at https://foosoft.net/projects/homemaker/`,
-	Run:   Run,
+	RunE:  Run,
 }
 
-func Run(_ *cobra.Command, args []string) {
+func Run(_ *cobra.Command, args []string) error {
 	taskName := "default"
 	if len(args) == 1 {
 		taskName = args[0]
@@ -56,6 +56,7 @@ func Run(_ *cobra.Command, args []string) {
 	if err != nil {
 		log.Printf("Error processing task %s", err)
 	}
+	return err
 }
 
 func init() {

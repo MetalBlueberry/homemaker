@@ -47,6 +47,7 @@ system for use.
 
 Full docs at https://foosoft.net/projects/homemaker/
 `,
+	SilenceUsage: true,
 }
 
 func Execute() {
