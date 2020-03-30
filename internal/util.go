@@ -24,6 +24,7 @@ package internal
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -66,7 +67,13 @@ func prompt(prompts ...string) bool {
 		fmt.Printf("%s: [y]es, [n]o? ", strings.Join(prompts, " "))
 
 		var ans string
-		fmt.Scanln(&ans)
+		_, err := fmt.Scanln(&ans)
+		if err == io.EOF {
+			return false
+		}
+		if err != nil {
+			panic(err)
+		}
 
 		switch strings.ToLower(ans) {
 		case "y":
@@ -89,7 +96,13 @@ func try(task func() error) error {
 			fmt.Printf("%s: [a]bort, [r]etry, [c]ancel? ", err)
 
 			var ans string
-			fmt.Scanln(&ans)
+			_, scanError := fmt.Scanln(&ans)
+			if scanError == io.EOF {
+				return err
+			}
+			if scanError != nil {
+				panic(scanError)
+			}
 
 			switch strings.ToLower(ans) {
 			case "a":
