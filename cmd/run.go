@@ -52,7 +52,10 @@ func Run(_ *cobra.Command, args []string) {
 
 	log.Printf("Execute task %#v", taskName)
 
-	internal.ProcessTask(taskName, conf)
+	err = internal.ProcessTask(taskName, conf)
+	if err != nil {
+		log.Printf("Error processing task %s", err)
+	}
 }
 
 func init() {

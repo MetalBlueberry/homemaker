@@ -1,4 +1,4 @@
 tasks:
-  simple-link:
+  default:
     links:
-      - ["sample.conf"]
+      - [".config/app/sample.conf"]

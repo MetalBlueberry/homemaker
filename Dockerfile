@@ -18,11 +18,17 @@ RUN cd test && go test -c
 
 FROM ubuntu
 
+RUN apt-get update -y && apt-get install -y tree
 ENV HOMEMAKER_DOCKER_TEST_ENV defined
+
+RUN groupadd -r gopher && useradd --no-log-init -m -r -g gopher gopher
+USER gopher
 
 COPY --from=build /homemaker/homemaker /bin/
 COPY --from=build /homemaker/test/test.test /bin/
 
-WORKDIR /home/ubuntu/.config/homemaker
+RUN mkdir -p /home/gopher/.config/homemaker
+WORKDIR /home/gopher/.config/homemaker
+
 COPY test .
 CMD ["test.test", "-ginkgo.v"] 

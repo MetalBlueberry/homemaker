@@ -63,7 +63,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String("home-dst", os.Getenv("HOME"), "target directory for tasks")
 	rootCmd.PersistentFlags().String("home-src", ".", "source directory for tasks")
-	rootCmd.PersistentFlags().Bool("verbose", false, "verbose output")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 
 	viper.BindPFlags(rootCmd.PersistentFlags())
 
