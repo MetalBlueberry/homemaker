@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,15 +14,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func run(arg ...string) *os.ProcessState {
+func run(arg ...string) (*os.ProcessState, error) {
 	io.WriteString(GinkgoWriter, "Start execution of homemaker with args ["+strings.Join(arg, ", ")+"]\n\n")
 	cmd := exec.Command("homemaker", arg...)
 	cmd.Stdout = GinkgoWriter
 	cmd.Stderr = GinkgoWriter
 	Expect(cmd.Start()).To(Succeed())
-	Expect(cmd.Wait()).To(Succeed())
+	err := cmd.Wait()
 	io.WriteString(GinkgoWriter, "\nExecution Done\n")
-	return cmd.ProcessState
+	return cmd.ProcessState, err
 }
 
 func logCommand(command string, arg ...string) {
@@ -44,7 +45,8 @@ var _ = Describe("Link", func() {
 	)
 
 	It("Should exec the program", func() {
-		state := run()
+		state, err := run()
+		Expect(err).To(BeNil())
 		Expect(state.Success()).To(BeTrue())
 	})
 
@@ -54,7 +56,8 @@ var _ = Describe("Link", func() {
 		Expect(linkToSampleConf).ToNot(BeAnExistingFile())
 
 		By("Running default task")
-		state := run("run", "-v")
+		state, err := run("run", "-v")
+		Expect(err).To(BeNil())
 		Expect(state.Success()).To(BeTrue())
 
 		By("Checking output")
@@ -63,20 +66,41 @@ var _ = Describe("Link", func() {
 		Expect(linkToSampleConf).To(BeALinkOf(sampleConf))
 
 		By("Running unlink")
-		state = run("run", "-v", "--unlink")
+		state, err = run("run", "-v", "--unlink")
+		Expect(err).To(BeNil())
 		Expect(state.Success()).To(BeTrue())
 
 		By("Checking that environment is clean")
 		printTree()
 		Expect(linkToSampleConf).ToNot(BeAnExistingFile())
 	})
+
 	It("Should return an error if the referenced file not exists", func() {
 		printTree()
 		Expect(notExistingConf).ToNot(BeAnExistingFile())
 
 		By("Running task link_unexisting_file")
-		state := run("run", "-v", "link_unexisting_file")
+		state, err := run("run", "-v", "link_unexisting_file")
+		Expect(err).ToNot(BeNil())
 		Expect(state.Success()).ToNot(BeTrue())
+	})
+
+	It("Should return an error if the target file exists", func() {
+		printTree()
+		Expect(notExistingConf).ToNot(BeAnExistingFile())
+
+		By("Create the file")
+		err := ioutil.WriteFile(linkToSampleConf, []byte{}, os.ModePerm)
+		Expect(err).To(BeNil())
+
+		By("Checking file exist")
+		printTree()
+		Expect(linkToSampleConf).To(BeAnExistingFile())
+
+		By("Running default task")
+		state, err := run("run", "-v")
+		Expect(err).ToNot(BeNil())
+		Expect(state.Success()).To(BeFalse())
 	})
 })
 
