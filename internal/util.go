@@ -64,7 +64,7 @@ func makeVariantNames(name, variant string) []string {
 
 func prompt(prompts ...string) bool {
 	for {
-		fmt.Printf("%s: [y]es, [n]o? ", strings.Join(prompts, " "))
+		fmt.Printf("%s: [y]es, [n]o? \n", strings.Join(prompts, " "))
 
 		var ans string
 		_, err := fmt.Scanln(&ans)
@@ -93,7 +93,7 @@ func try(task func() error) error {
 
 	loop:
 		for {
-			fmt.Printf("%s: [a]bort, [r]etry, [c]ancel? ", err)
+			fmt.Printf("%s: [a]bort, [r]etry, [c]ancel? \n", err)
 
 			var ans string
 			_, scanError := fmt.Scanln(&ans)

@@ -1,6 +1,7 @@
 package test_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,6 +25,67 @@ func run(arg ...string) (*os.ProcessState, error) {
 	err := cmd.Wait()
 	io.WriteString(GinkgoWriter, "\nExecution Done\n")
 	return cmd.ProcessState, err
+}
+
+type InteractiveExecCommand struct {
+	io.WriteCloser
+	io.ReadCloser
+	Command *exec.Cmd
+	Output  *bytes.Buffer
+}
+
+func interactive(arg ...string) InteractiveExecCommand {
+	fmt.Fprintf(GinkgoWriter, "Start interactive execution of homemaker with args %s\n\n", arg)
+
+	outBuffer := &bytes.Buffer{}
+
+	cmd := exec.Command("homemaker", arg...)
+
+	outWritter := io.MultiWriter(GinkgoWriter, outBuffer)
+	cmd.Stdout = outWritter
+	cmd.Stderr = outWritter
+
+	r, w := io.Pipe()
+	icmd := InteractiveExecCommand{
+		WriteCloser: w,
+		ReadCloser:  r,
+		Command:     cmd,
+		Output:      outBuffer,
+	}
+	cmd.Stdin = icmd
+
+	Expect(cmd.Start()).To(Succeed())
+	return icmd
+}
+
+func (i InteractiveExecCommand) Close() (err error) {
+	err = i.WriteCloser.Close()
+	if err != nil {
+		return
+	}
+	err = i.ReadCloser.Close()
+	return
+}
+
+func (i InteractiveExecCommand) interact(msg string) InteractiveExecCommand {
+	fmt.Fprintf(GinkgoWriter, "Typing %s \n", msg)
+	fmt.Fprint(i, msg)
+	return i
+}
+func (i InteractiveExecCommand) wait(duration time.Duration) InteractiveExecCommand {
+	fmt.Fprintf(GinkgoWriter, "Giving %s to the command to progress\n", duration)
+	time.Sleep(duration)
+	return i
+}
+
+func (i InteractiveExecCommand) complete() (*os.ProcessState, error) {
+	err := i.Close()
+	if err != nil {
+		return nil, err
+	}
+	err = i.Command.Wait()
+	fmt.Fprintf(GinkgoWriter, "\nExecution Done\n")
+	return i.Command.ProcessState, err
 }
 
 func logCommand(command string, arg ...string) {
@@ -85,7 +148,7 @@ var _ = Describe("Link", func() {
 		Expect(state.Success()).ToNot(BeTrue())
 	})
 
-	It("Should return an error if the target file exists", func() {
+	It("Should return ask user what to do in case of file already exist", func() {
 		printTree()
 		Expect(notExistingConf).ToNot(BeAnExistingFile())
 
@@ -98,10 +161,23 @@ var _ = Describe("Link", func() {
 		Expect(linkToSampleConf).To(BeAnExistingFile())
 
 		By("Running default task")
-		state, err := run("run", "-v")
+		cmd := interactive("run", "-v").wait(time.Millisecond * 100)
+
+		By("Answer no to clobber")
+		printTree()
+		cmd.interact("n\n").wait(time.Millisecond * 100)
+		Expect(linkToSampleConf).To(BeAnExistingFile())
+
+		By("Answer Abort to failed task")
+		printTree()
+		cmd.interact("a\n").wait(time.Millisecond * 100)
+		Expect(linkToSampleConf).To(BeAnExistingFile())
+
+		state, err := cmd.complete()
 		Expect(err).ToNot(BeNil())
 		Expect(state.Success()).To(BeFalse())
 	})
+
 })
 
 type fileLinkMatcher struct {
