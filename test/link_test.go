@@ -37,26 +37,46 @@ func printTree() {
 }
 
 var _ = Describe("Link", func() {
+	var (
+		linkToSampleConf = "/home/gopher/.config/app/sample.conf"
+		sampleConf       = "./.config/app/sample.conf"
+		notExistingConf  = "./.config/app/not_exist.conf"
+	)
+
 	It("Should exec the program", func() {
 		state := run()
 		Expect(state.Success()).To(BeTrue())
 	})
 
-	It("Should execute the run command", func() {
-
-		linkToSampleConf := "/home/gopher/.config/app/sample.conf"
-		sampleConf := "./.config/app/sample.conf"
+	It("Should execute the run command with the default task", func() {
 
 		printTree()
 		Expect(linkToSampleConf).ToNot(BeAnExistingFile())
 
+		By("Running default task")
 		state := run("run", "-v")
 		Expect(state.Success()).To(BeTrue())
 
+		By("Checking output")
 		printTree()
 		Expect(linkToSampleConf).To(BeAnExistingFile())
 		Expect(linkToSampleConf).To(BeALinkOf(sampleConf))
 
+		By("Running unlink")
+		state = run("run", "-v", "--unlink")
+		Expect(state.Success()).To(BeTrue())
+
+		By("Checking that environment is clean")
+		printTree()
+		Expect(linkToSampleConf).ToNot(BeAnExistingFile())
+	})
+	It("Should return an error if the referenced file not exists", func() {
+		printTree()
+		Expect(notExistingConf).ToNot(BeAnExistingFile())
+
+		By("Running task link_unexisting_file")
+		state := run("run", "-v", "link_unexisting_file")
+		Expect(state.Success()).ToNot(BeTrue())
 	})
 })
 

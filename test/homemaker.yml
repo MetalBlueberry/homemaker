@@ -2,3 +2,7 @@ tasks:
   default:
     links:
       - [".config/app/sample.conf"]
+
+  link_unexisting_file:
+    links:
+      - [".config/app/not_exist.conf"]
